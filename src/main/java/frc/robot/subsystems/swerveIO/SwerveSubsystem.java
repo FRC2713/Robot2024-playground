@@ -229,10 +229,22 @@ public class SwerveSubsystem extends SubsystemBase {
    *     same way in this array as they are instantiated into SwerveDriveKinematics.
    */
   public void setModuleStates(SwerveModuleState[] swerveModuleStates) {
-    frontLeft.setDesiredState(swerveModuleStates[0]);
-    frontRight.setDesiredState(swerveModuleStates[1]);
-    backLeft.setDesiredState(swerveModuleStates[2]);
-    backRight.setDesiredState(swerveModuleStates[3]);
+    Logger.getInstance().recordOutput("Swerve/RawDesired Module States", swerveModuleStates);
+    ModuleSetpointGenerator setpointGenerator =
+        new ModuleSetpointGenerator(
+            Constants.DriveConstants.KINEMATICS,
+            swerveModuleStates,
+            Constants.DriveConstants.MAX_SWERVE_VEL,
+            Constants.DriveConstants.MAX_SWERVE_ACCEL,
+            Constants.DriveConstants.maxModuleSteeringRate);
+    SwerveModuleState[] newSwerveModuleStates =
+        setpointGenerator.getFeasibleModuleStates(
+            Constants.DriveConstants.KINEMATICS.toChassisSpeeds(swerveModuleStates),
+            Constants.DriveConstants.autoScrubLimit);
+    frontLeft.setDesiredState(newSwerveModuleStates[0]);
+    frontRight.setDesiredState(newSwerveModuleStates[1]);
+    backLeft.setDesiredState(newSwerveModuleStates[2]);
+    backRight.setDesiredState(newSwerveModuleStates[3]);
   }
 
   public boolean gyroPitchHasChanged() {
@@ -352,7 +364,7 @@ public class SwerveSubsystem extends SubsystemBase {
         };
 
     Logger.getInstance().recordOutput("Swerve/Measured Module States", measuredModuleStates);
-    Logger.getInstance().recordOutput("Swerve/Desired Module States", desiredModuleStates);
+    Logger.getInstance().recordOutput("Swerve/DesiredFeasable Module States", desiredModuleStates);
 
     Logger.getInstance().processInputs("Swerve/Chassis", inputs);
     Logger.getInstance()

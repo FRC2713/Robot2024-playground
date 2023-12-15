@@ -176,6 +176,12 @@ public final class Constants {
   @UtilityClass
   public static final class DriveConstants {
 
+    /* Allowable scrub */
+    public static final double autoScrubLimit = 0.05; // m/s
+    public static final double teleopScrubLimit = 0.25; // m/s
+
+    public static final double maxModuleSteeringRate = 4.0 * Math.PI;
+
     @UtilityClass
     public static class FieldTunables {
       // OTF Trajctory Generation (go over or under Charge Station, around barrier)

@@ -6,6 +6,7 @@ import com.pathplanner.lib.PathPoint;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.REVLibError;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -25,6 +26,26 @@ import org.littletonrobotics.junction.Logger;
 
 @UtilityClass
 public final class RedHawkUtil {
+
+  public static Pair<Double, Double> pol2cart(double r, double theta) {
+    double x = r * Math.cos(theta);
+    double y = r * Math.sin(theta);
+    return new Pair<>(x, y);
+  }
+
+  /** Constrains an angle to be within [-pi, pi). */
+  public static double constrainAngleNegPiToPi(double angle) {
+    double x = (angle + Math.PI) % (2.0 * Math.PI);
+    if (x < 0) {
+      x += 2.0 * Math.PI;
+    }
+    return x - Math.PI;
+  }
+
+  /** Returns |angle| placed within within [-pi, pi) of |referenceAngle|. */
+  public static double placeInScope(double angle, double referenceAngle) {
+    return referenceAngle + constrainAngleNegPiToPi(angle - referenceAngle);
+  }
 
   /**
    * Checks whether the given REVLibError is actually an error, and then logs it to AdvantageScope

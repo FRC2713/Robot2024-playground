@@ -23,6 +23,7 @@ public class TrajectoryController {
   PathPlannerTrajectory traj;
   HashMap<String, Command> eventMap = new HashMap<>();
   PathPlannerState targetState;
+  boolean doPrint = false;
   PPHolonomicDriveController controller =
       new PPHolonomicDriveController(
           Gains.K_TRAJECTORY_CONTROLLER_GAINS_X.createWpilibController(),
@@ -30,6 +31,8 @@ public class TrajectoryController {
           Gains.K_TRAJECTORY_CONTROLLER_GAINS_ROTATION.createWpilibController());
 
   private TrajectoryController() {}
+
+  ErrorTracker errorTracker = new ErrorTracker(10);
 
   public static TrajectoryController getInstance() {
     if (instance == null) {
@@ -50,6 +53,8 @@ public class TrajectoryController {
 
     timer.reset();
     timer.stop();
+    doPrint = true;
+    errorTracker.reset();
   }
 
   public boolean isFinished() {
@@ -69,6 +74,17 @@ public class TrajectoryController {
     } else {
       targetState = (PathPlannerState) traj.sample(timer.get());
     }
+
+    var error =
+        new Pose2d(
+            targetState.poseMeters.minus(Robot.swerveDrive.getUsablePose()).getX(),
+            targetState.poseMeters.minus(Robot.swerveDrive.getUsablePose()).getY(),
+            Robot.swerveDrive
+                .getUsablePose()
+                .getRotation()
+                .minus(targetState.poseMeters.getRotation()));
+
+    errorTracker.addObservation(error);
 
     Logger.getInstance()
         .recordOutput(
@@ -93,6 +109,12 @@ public class TrajectoryController {
           new ChassisSpeeds(
               twistVel.dx / loopTime, twistVel.dy / loopTime, twistVel.dtheta / loopTime);
       return updatedSpeeds;
-    } else return new ChassisSpeeds();
+    } else {
+      if (doPrint) {
+        errorTracker.printSummary();
+      }
+      doPrint = false;
+      return new ChassisSpeeds();
+    }
   }
 }
