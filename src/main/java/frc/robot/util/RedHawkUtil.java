@@ -10,13 +10,12 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import frc.robot.Constants;
 import frc.robot.Robot;
-import frc.robot.Robot.GamePieceMode;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import lombok.NonNull;
@@ -71,53 +70,6 @@ public final class RedHawkUtil {
         heading,
         Robot.swerveDrive.getUsablePose().getRotation(),
         Robot.swerveDrive.getAverageVelocity());
-  }
-
-  public static Translation2d getClosestGrid(double y) {
-    return Arrays.asList(
-            Robot.gamePieceMode == GamePieceMode.CUBE
-                ? FieldConstants.Grids.cubeComplexLowTranslations
-                : FieldConstants.Grids.coneComplexLowTranslations)
-        .stream()
-        .sorted(
-            (a, b) ->
-                Double.compare(
-                    a.getDistance(Robot.swerveDrive.getUsablePose().getTranslation()),
-                    b.getDistance(Robot.swerveDrive.getUsablePose().getTranslation())))
-        .findFirst()
-        .get()
-        .plus(new Translation2d(Constants.DriveConstants.FieldTunables.GRID_OFFSET, 0));
-  }
-
-  public static int getClosestGridNumber(double y) {
-    return Arrays.asList(FieldConstants.Grids.complexLowTranslations)
-        .indexOf(
-            Arrays.asList(
-                    Robot.gamePieceMode == GamePieceMode.CUBE
-                        ? FieldConstants.Grids.cubeComplexLowTranslations
-                        : FieldConstants.Grids.coneComplexLowTranslations)
-                .stream()
-                .sorted(
-                    (a, b) ->
-                        Double.compare(
-                            a.getDistance(Robot.swerveDrive.getUsablePose().getTranslation()),
-                            b.getDistance(Robot.swerveDrive.getUsablePose().getTranslation())))
-                .findFirst()
-                .get());
-  }
-
-  public static boolean isOnChargeStation(Translation2d location) {
-    // TODO: Get working on red alliance
-    double x = location.getX();
-    double y = location.getY();
-    return (x < FieldConstants.Community.chargingStationOuterX
-        && x > FieldConstants.Community.chargingStationInnerX
-        && y < FieldConstants.Community.chargingStationLeftY
-        && y > FieldConstants.Community.chargingStationRightY);
-  }
-
-  public static boolean isOnChargeStation(Pose2d location) {
-    return isOnChargeStation(Pose2dToTranslation2d(location));
   }
 
   public static class ErrHandler {
@@ -226,145 +178,23 @@ public final class RedHawkUtil {
         });
   }
 
-  // // https://docs.revrobotics.com/sparkmax/operating-modes/control-interfaces
-  // public static void configureDefaultTrafficSpark(CANSparkMax spark) {
-  //   // Applied output, faults, sticky faults, isFollower
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus0, 10);
-
-  //   // velocity, temperature, voltage, current
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus1, 20);
-
-  //   // position
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus2, 20);
-
-  //   // analog sensor voltage, analog sensor velocity, analog sensor position
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus3, 50);
-
-  //   // alt encoder velocity, alt encoder position
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus4, 20);
-
-  //   // duty cycle absolute encoder position, duty cycle absolute encoder angle
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus5, 200);
-
-  //   // duty cycle absolute encoder velocity, duty cycle absolute encoder frequency
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus6, 200);
-  // }
-
-  // // https://docs.revrobotics.com/sparkmax/operating-modes/control-interfaces
-  // // Used for sparks that aren't that important and don't need to be broadcasting info very often
-  // public static void configureLowTrafficSpark(CANSparkMax spark) {
-  //   // Applied output, faults, sticky faults, isFollower
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus0, 20);
-
-  //   // velocity, temperature, voltage, current
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus1, 40);
-
-  //   // position
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus2, 1000);
-
-  //   // analog sensor voltage, analog sensor velocity, analog sensor position
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus3, 10000);
-
-  //   // alt encoder velocity, alt encoder position
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus4, 10000);
-
-  //   // duty cycle absolute encoder position, duty cycle absolute encoder angle
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus5, 10000);
-
-  //   // duty cycle absolute encoder velocity, duty cycle absolute encoder frequency
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus6, 10000);
-  //   configureDefaultTrafficSpark(spark);
-  // }
-
-  // // https://docs.revrobotics.com/sparkmax/operating-modes/control-interfaces
-  // // Used for sparks that are critical to robot functionality
-  // public static void configureHighTrafficSpark(CANSparkMax spark) {
-  //   // Applied output, faults, sticky faults, isFollower
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus0, 1000);
-
-  //   // velocity, temperature, voltage, current
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus1, 10);
-
-  //   // position
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus2, 20);
-
-  //   // analog sensor voltage, analog sensor velocity, analog sensor position
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus3, 10000);
-
-  //   // alt encoder velocity, alt encoder position
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus4, 10000);
-
-  //   // duty cycle absolute encoder position, duty cycle absolute encoder angle
-  //   // spark.setPeriodicFramePeriod(PeriodicFrame.kStatus5, 10000);
-
-  //   // duty cycle absolute encoder velocity, duty cycle absolute encoder frequency
-  //   spark.setPeriodicFramePeriod(PeriodicFrame.kStatus6, 10000);
-  //   configureDefaultTrafficSpark(spark);
-  // }
-
-  // // https://v5.docs.ctr-electronics.com/en/stable/ch18_CommonAPI.html
-  // public static void configureDefaultPigeon2(Pigeon2 pigeon) {
-  //   // 5, 7, 8 don't seem to exist
-
-  //   // calibration status, IMU temperature
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_1_General, 100);
-
-  //   // biased gyro values (x, y, z)
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_2_GeneralCompass, 100);
-
-  //   // accelerometer derived angles
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_3_GeneralAccel, 100);
-
-  //   // unprocessed magnetometer values (x, y, z)
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.BiasedStatus_4_Mag, 20);
-
-  //   // 9 degree fused yaw, pitch, roll (requires magnetometer calibration)
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.BiasedStatus_6_Accel, 10);
-
-  //   // six degree fused yaw, pitch, roll
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_9_SixDeg_YPR, 10);
-
-  //   // six degree fused quaternion
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_10_SixDeg_Quat, 100);
-
-  //   // accumulated gyro angles
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_11_GyroAccum, 20);
-  // }
-
-  // // https://v5.docs.ctr-electronics.com/en/stable/ch18_CommonAPI.html
-  // public static void configureOptimizedPigeon2(Pigeon2 pigeon) {
-  //   // 5, 7, 8 don't seem to exist
-
-  //   // calibration status, IMU temperature
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_1_General, 10000);
-
-  //   // biased gyro values (x, y, z)
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_2_GeneralCompass, 10000);
-
-  //   // accelerometer derived angles
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_3_GeneralAccel, 10000);
-
-  //   // unprocessed magnetometer values (x, y, z)
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.BiasedStatus_4_Mag, 10000);
-
-  //   // 9 degree fused yaw, pitch, roll (requires magnetometer calibration)
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.BiasedStatus_6_Accel, 10000);
-
-  //   // six degree fused yaw, pitch, roll
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_9_SixDeg_YPR, 10);
-
-  //   // six degree fused quaternion
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_10_SixDeg_Quat, 10000);
-
-  //   // accumulated gyro angles
-  //   pigeon.setStatusFramePeriod(PigeonIMU_StatusFrame.CondStatus_11_GyroAccum, 10000);
-  // }
-
-  public PathPoint pathPointFromHolonomicPose(Pose2d pose) {
-    return pathPointFromHolonomicPose(pose, pose.getRotation());
+  public static double lerp(double startValue, double endValue, double t) {
+    return startValue + (endValue - startValue) * t;
   }
 
-  public PathPoint pathPointFromHolonomicPose(Pose2d pose, Rotation2d pathHeading) {
-    return new PathPoint(pose.getTranslation(), pathHeading, pose.getRotation());
+  public static Pose2d lerp(Pose2d startValue, Pose2d endValue, double t) {
+    return startValue.plus((endValue.minus(startValue)).times(t));
+  }
+
+  public static ChassisSpeeds lerp(ChassisSpeeds startValue, ChassisSpeeds endValue, double t) {
+    return new ChassisSpeeds(
+        lerp(startValue.vxMetersPerSecond, endValue.vxMetersPerSecond, t),
+        lerp(startValue.vyMetersPerSecond, endValue.vyMetersPerSecond, t),
+        lerp(startValue.omegaRadiansPerSecond, endValue.omegaRadiansPerSecond, t));
+  }
+
+  public static SwerveModulePosition moduleDelta(
+      SwerveModulePosition before, SwerveModulePosition after) {
+    return new SwerveModulePosition(after.distanceMeters - before.distanceMeters, after.angle);
   }
 }
