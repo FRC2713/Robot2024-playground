@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.Constants;
 import frc.robot.util.OffsetAbsoluteAnalogEncoder;
 import frc.robot.util.RedHawkUtil;
+import frc.robot.util.SparkConfigurator;
 import java.util.HashMap;
 
 public class SwerveModuleIOSparkMAX implements SwerveModuleIO {
@@ -84,6 +85,13 @@ public class SwerveModuleIOSparkMAX implements SwerveModuleIO {
 
     cOk(getAziEncoder().setPositionConversionFactor(7.0 / 150.0 * 360.0));
     cOk(getAziEncoder().setVelocityConversionFactor(7.0 / 150.0 * 360.0));
+
+    SparkConfigurator azimuthConfigurator = new SparkConfigurator(azimuth);
+    azimuthConfigurator
+        .setInverted(true)
+        .checkOK(s -> s.setIdleMode(IdleMode.kBrake))
+        .checkOK(s -> s.getEncoder().setPositionConversionFactor(7.0 / 150.0 * 360.0))
+        .checkOK(s -> s.getEncoder().setVelocityConversionFactor(7.0 / 150.0 * 360.0));
 
     for (int i = 0; i < 30; i++) {
       // seed();
