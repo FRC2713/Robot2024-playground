@@ -4,13 +4,10 @@
 
 package frc.robot;
 
-import com.pathplanner.lib.PathPoint;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.swerveIO.module.ModuleInfo;
 import frc.robot.subsystems.swerveIO.module.SwerveModuleName;
-import frc.robot.util.FieldConstants;
 import frc.robot.util.PIDFFGains;
 import lombok.experimental.UtilityClass;
 
@@ -96,10 +93,7 @@ public final class Constants {
 
     public static final double HEADING_CONTROLLER_DRIVER_CHANGE_RATE = 4;
     public static final PIDFFGains K_HEADING_CONTROLLER_GAINS =
-        PIDFFGains.builder("Heading Controller").kP(12).kS(3).kD(0.35).tolerance(1).build();
-
-    public static final PIDFFGains K_BRIDGE_CONTROLLER_GAINS =
-        PIDFFGains.builder("Bridge Controller").kP(0.01).kD(0).tolerance(0).build();
+        PIDFFGains.builder().name("Heading Controller").kP(12).kD(.35).kS(3).build();
 
     public static final ModuleInfo FRONT_LEFT =
         ModuleInfo.builder()
@@ -152,27 +146,25 @@ public final class Constants {
     @UtilityClass
     public static final class Gains {
       public static final PIDFFGains K_DEFAULT_AZIMUTH_GAINS =
-          PIDFFGains.builder("BackRight/Default Azimuth").kP(0.12).tolerance(0.75).build();
+          PIDFFGains.builder().name("Swerve/Defaults/Azimuth").kP(0.12).build().buildTunables();
+
       public static final PIDFFGains K_DEFAULT_DRIVING_GAINS =
-          PIDFFGains.builder("BackRight/Default Driving").kP(1).kD(0).kS(0.225).kV(2.33).build();
+          PIDFFGains.builder()
+              .name("Swerve/Defaults/Driving")
+              .kP(1.0)
+              .kS(0.225)
+              .kV(2.33)
+              .build()
+              .buildTunables();
 
       public static final PIDFFGains K_TRAJECTORY_CONTROLLER_GAINS_X =
-          PIDFFGains.builder("Trajectory Controller X-Axis").kP(7).kD(0.0).build();
+          PIDFFGains.builder().name("Trajectory/X").kP(7).build();
 
       public static final PIDFFGains K_TRAJECTORY_CONTROLLER_GAINS_Y =
-          PIDFFGains.builder("Trajectory Controller Y-Axis").kP(7).kD(0.0).build();
+          PIDFFGains.builder().name("Trajectory/Y").kP(7).build();
 
       public static final PIDFFGains K_TRAJECTORY_CONTROLLER_GAINS_ROTATION =
-          PIDFFGains.builder("Trajectory Controller Rotation").kP(2.5).kD(0.0).build();
+          PIDFFGains.builder().name("Trajectory/R").kP(2.5).build();
     }
-
-    public static final PIDFFGains K_FRONT_LEFT_AZIMUTH_GAINS =
-        PIDFFGains.builder("Front Left").kP(0.1).kS(0.12).tolerance(1.0).build();
-    public static final PIDFFGains K_FRONT_RIGHT_AZIMUTH_GAINS =
-        PIDFFGains.builder("Front Right").kP(0.1).kS(.12).tolerance(1.0).build();
-    public static final PIDFFGains K_BACK_LEFT_AZIMUTH_GAINS =
-        PIDFFGains.builder("Back Left").kP(0.1).kS(.15).tolerance(1.0).build();
-    public static final PIDFFGains K_BACK_RIGHT_AZIMUTH_GAINS =
-        PIDFFGains.builder("Back Right").kP(0.1).kS(.13).tolerance(1.0).build();
   }
 }
