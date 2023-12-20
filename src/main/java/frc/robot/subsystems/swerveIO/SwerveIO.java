@@ -1,6 +1,8 @@
 package frc.robot.subsystems.swerveIO;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface SwerveIO {
@@ -19,7 +21,10 @@ public interface SwerveIO {
    *
    * @param inputs SwerveInputs instance
    */
-  public void updateInputs(SwerveInputs inputs);
+  public void updateInputs(
+      SwerveInputs inputs,
+      SwerveDriveKinematics kinematics,
+      SwerveModulePosition[] measuredPositions);
 
   /**
    * Sets the gyro to the given rotation.

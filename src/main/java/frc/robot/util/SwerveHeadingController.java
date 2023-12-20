@@ -19,7 +19,6 @@ public class SwerveHeadingController {
 
   private SwerveHeadingController() {
     controller = new PIDFFController(DriveConstants.K_HEADING_CONTROLLER_GAINS);
-    controller.setTolerance(DriveConstants.K_HEADING_CONTROLLER_GAINS.tolerance.get());
     controller.enableContinuousInput(0, 360);
     setpoint = Robot.swerveDrive.getUsablePose().getRotation();
   }
