@@ -30,6 +30,26 @@ public class SparkConfigurator {
     return this;
   }
 
+  public <T> SparkConfigurator checkOKAndReadBackValue(
+      Function<CANSparkMax, REVLibError> setConfigCall, Function<CANSparkMax, Boolean> isGood) {
+
+    uniqueConfigs++;
+    REVLibError maybeError = REVLibError.kOk;
+    do {
+      maybeError = setConfigCall.apply(spark);
+      totalCalls++;
+
+      if (maybeError != REVLibError.kOk) {
+        System.err.println(
+            String.format(
+                "[%s] %s setting #%s not OK! (%s)",
+                maybeError.name(), spark.getDeviceId(), uniqueConfigs, totalCalls));
+      }
+    } while (maybeError != REVLibError.kOk && isGood.apply(spark));
+
+    return this;
+  }
+
   public SparkConfigurator setInverted(boolean inverted) {
     // alt approach: 3005s CAN stuff
     // https://github.com/FRC3005/Offseason-2023/blob/92553a0ea14fc3feee2a5d9d3d135bfe99358ec3/src/main/java/com/revrobotics/CANSparkMaxExtensions.java#L16
