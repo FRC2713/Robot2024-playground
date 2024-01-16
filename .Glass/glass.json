@@ -1,11 +1,5 @@
 {
   "NetworkTables": {
-    "Persistent Values": {
-      "open": false
-    },
-    "Transitory Values": {
-      "open": false
-    },
     "transitory": {
       "AdvantageKit": {
         "open": true
@@ -14,6 +8,18 @@
         "Elevator PID": {
           "open": true
         }
+      },
+      "Tunables": {
+        "Swerve": {
+          "Defaults": {
+            "Driving": {
+              "open": true
+            },
+            "open": true
+          },
+          "open": true
+        },
+        "open": true
       }
     },
     "types": {
@@ -51,6 +57,6 @@
   },
   "NetworkTables Settings": {
     "mode": "Client (NT4)",
-    "serverTeam": "2713"
+    "serverTeam": "localhost"
   }
 }

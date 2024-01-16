@@ -6,8 +6,6 @@ package frc.robot;
 
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -19,16 +17,13 @@ import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.commands.OTF.GoClosestGrid;
-import frc.robot.commands.OTF.GoHumanPlayer;
 import frc.robot.commands.fullRoutines.Simple;
 import frc.robot.subsystems.swerveIO.SwerveIOPigeon2;
 import frc.robot.subsystems.swerveIO.SwerveIOSim;
 import frc.robot.subsystems.swerveIO.SwerveSubsystem;
+import frc.robot.subsystems.swerveIO.SwerveSubsystem.MotionMode;
 import frc.robot.subsystems.swerveIO.module.SwerveModuleIOSim;
 import frc.robot.subsystems.swerveIO.module.SwerveModuleIOSparkMAX;
 import frc.robot.subsystems.visionIO.Vision;
@@ -36,14 +31,11 @@ import frc.robot.subsystems.visionIO.Vision.Limelights;
 import frc.robot.subsystems.visionIO.Vision.SnapshotMode;
 import frc.robot.subsystems.visionIO.VisionIOSim;
 import frc.robot.subsystems.visionIO.VisionLimelight;
-import frc.robot.util.DebugMode;
 import frc.robot.util.MechanismManager;
-import frc.robot.util.MotionHandler.MotionMode;
 import frc.robot.util.RedHawkUtil;
 import frc.robot.util.RedHawkUtil.ErrHandler;
 import frc.robot.util.RumbleManager;
 import frc.robot.util.SwerveHeadingController;
-import frc.robot.util.TrajectoryController;
 import java.io.File;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -52,20 +44,11 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 public class Robot extends LoggedRobot {
-  public enum GamePieceMode {
-    CONE,
-    CUBE;
-  }
-
   private static MechanismManager mechManager;
-  public static MotionMode motionMode = MotionMode.FULL_DRIVE;
   public static Vision vision;
   //   public static Slapper slapper;
   public static SwerveSubsystem swerveDrive;
-  public GoClosestGrid goClosestGrid;
-  public GoHumanPlayer goHumanPlayer;
   private Command autoCommand;
-  public static GamePieceMode gamePieceMode = GamePieceMode.CUBE;
   private LinearFilter canUtilizationFilter = LinearFilter.singlePoleIIR(0.25, 0.02);
 
   public static final CommandXboxController driver =
@@ -159,155 +142,53 @@ public class Robot extends LoggedRobot {
                 new SwerveModuleIOSparkMAX(Constants.DriveConstants.BACK_RIGHT));
 
     mechManager = new MechanismManager();
-    goClosestGrid = new GoClosestGrid();
-    goHumanPlayer = new GoHumanPlayer();
 
     checkAlliance();
     buildAutoChooser();
 
-    // Driver Controls
-    if (Constants.DEBUG_MODE == DebugMode.MATCH) {
-      driver
-          .povUp()
-          .onTrue(
-              new InstantCommand(
-                  () -> {
-                    motionMode = MotionMode.HEADING_CONTROLLER;
-                    SwerveHeadingController.getInstance().setSetpoint(Rotation2d.fromDegrees(0));
-                  }));
-
-      driver
-          .povLeft()
-          .onTrue(
-              new InstantCommand(
-                  () -> {
-                    motionMode = MotionMode.HEADING_CONTROLLER;
-                    SwerveHeadingController.getInstance().setSetpoint(Rotation2d.fromDegrees(90));
-                  }));
-
-      driver
-          .povDown()
-          .onTrue(
-              new InstantCommand(
-                  () -> {
-                    motionMode = MotionMode.HEADING_CONTROLLER;
-                    SwerveHeadingController.getInstance().setSetpoint(Rotation2d.fromDegrees(180));
-                  }));
-
-      driver
-          .povRight()
-          .onTrue(
-              new InstantCommand(
-                  () -> {
-                    motionMode = MotionMode.HEADING_CONTROLLER;
-                    SwerveHeadingController.getInstance().setSetpoint(Rotation2d.fromDegrees(270));
-                  }));
-    } else if (Constants.DEBUG_MODE == DebugMode.TUNE_MODULES) {
-      driver
-          .povUp()
-          .whileTrue(
-              new InstantCommand(
-                  () -> {
-                    motionMode = MotionMode.NULL;
-                    swerveDrive.setModuleStates(
-                        new SwerveModuleState[] {
-                          new SwerveModuleState(
-                              Units.feetToMeters(Constants.TUNE_MODULES_DRIVE_SPEED),
-                              Rotation2d.fromDegrees(0)),
-                          new SwerveModuleState(
-                              Units.feetToMeters(Constants.TUNE_MODULES_DRIVE_SPEED),
-                              Rotation2d.fromDegrees(0)),
-                          new SwerveModuleState(
-                              Units.feetToMeters(Constants.TUNE_MODULES_DRIVE_SPEED),
-                              Rotation2d.fromDegrees(0)),
-                          new SwerveModuleState(
-                              Units.feetToMeters(Constants.TUNE_MODULES_DRIVE_SPEED),
-                              Rotation2d.fromDegrees(0))
-                        });
-                  },
-                  swerveDrive))
-          .onFalse(
-              new InstantCommand(
-                  () -> {
-                    motionMode = MotionMode.FULL_DRIVE;
-                  },
-                  swerveDrive));
-      driver
-          .povDown()
-          .whileTrue(
-              new InstantCommand(
-                  () -> {
-                    motionMode = MotionMode.NULL;
-                    swerveDrive.setModuleStates(
-                        new SwerveModuleState[] {
-                          new SwerveModuleState(
-                              Units.feetToMeters(-Constants.TUNE_MODULES_DRIVE_SPEED),
-                              Rotation2d.fromDegrees(90)),
-                          new SwerveModuleState(
-                              Units.feetToMeters(-Constants.TUNE_MODULES_DRIVE_SPEED),
-                              Rotation2d.fromDegrees(90)),
-                          new SwerveModuleState(
-                              Units.feetToMeters(-Constants.TUNE_MODULES_DRIVE_SPEED),
-                              Rotation2d.fromDegrees(90)),
-                          new SwerveModuleState(
-                              Units.feetToMeters(-Constants.TUNE_MODULES_DRIVE_SPEED),
-                              Rotation2d.fromDegrees(90))
-                        });
-                  },
-                  swerveDrive))
-          .onFalse(
-              new InstantCommand(
-                  () -> {
-                    motionMode = MotionMode.FULL_DRIVE;
-                  },
-                  swerveDrive));
-    }
+    driver
+        .povUp()
+        .onTrue(
+            new InstantCommand(
+                () -> {
+                  swerveDrive.setMotionMode(MotionMode.HEADING_CONTROLLER);
+                  SwerveHeadingController.getInstance().setSetpoint(Rotation2d.fromDegrees(0));
+                }));
 
     driver
-        .a()
+        .povLeft()
         .onTrue(
-            new ConditionalCommand(
-                // Past mid point
-                new InstantCommand(
-                    () -> {
-                      motionMode = MotionMode.TRAJECTORY;
-                      goHumanPlayer.regenerateTrajectory();
-                      TrajectoryController.getInstance().changePath(goHumanPlayer.getTrajectory());
-                    }),
-                // Mid point interior
-                new InstantCommand(
-                    () -> {
-                      motionMode = MotionMode.TRAJECTORY;
-                      goClosestGrid.changingPath();
-                      goClosestGrid.regenerateTrajectory();
-                      TrajectoryController.getInstance().changePath(goClosestGrid.getTrajectory());
-                    }),
-                () -> RedHawkUtil.pastMidPoint(swerveDrive.getUsablePose())))
-        .whileTrue(
-            new ConditionalCommand(
-                // Past mid point
-                new RepeatCommand(
-                    new InstantCommand(
-                        () -> {
-                          if (goHumanPlayer.hasElapsed()) {
-                            TrajectoryController.getInstance()
-                                .changePath(goHumanPlayer.getTrajectory());
-                          }
-                        })),
+            new InstantCommand(
+                () -> {
+                  swerveDrive.setMotionMode(MotionMode.HEADING_CONTROLLER);
+                  SwerveHeadingController.getInstance().setSetpoint(Rotation2d.fromDegrees(90));
+                }));
 
-                // Mid point interior
-                new RepeatCommand(
-                    new InstantCommand(
-                        () -> {
-                          if (goClosestGrid.hasElapsed()) {
-                            TrajectoryController.getInstance()
-                                .changePath(goClosestGrid.getTrajectory());
-                          }
-                        })),
-                () -> RedHawkUtil.pastMidPoint(swerveDrive.getUsablePose())))
-        .onFalse(new InstantCommand(() -> motionMode = MotionMode.FULL_DRIVE));
+    driver
+        .povDown()
+        .onTrue(
+            new InstantCommand(
+                () -> {
+                  swerveDrive.setMotionMode(MotionMode.HEADING_CONTROLLER);
+                  SwerveHeadingController.getInstance().setSetpoint(Rotation2d.fromDegrees(180));
+                }));
 
-    driver.x().onTrue(new InstantCommand(() -> motionMode = MotionMode.LOCKDOWN));
+    driver
+        .povRight()
+        .onTrue(
+            new InstantCommand(
+                () -> {
+                  swerveDrive.setMotionMode(MotionMode.HEADING_CONTROLLER);
+                  SwerveHeadingController.getInstance().setSetpoint(Rotation2d.fromDegrees(270));
+                }));
+
+    driver
+        .x()
+        .onTrue(
+            new InstantCommand(
+                () -> {
+                  swerveDrive.setMotionMode(MotionMode.LOCKDOWN);
+                }));
 
     driver
         .start()
@@ -337,7 +218,7 @@ public class Robot extends LoggedRobot {
     RumbleManager.getInstance().periodic();
     mechManager.periodic();
     if (Math.abs(driver.getRightX()) > 0.25) {
-      motionMode = MotionMode.FULL_DRIVE;
+      swerveDrive.setMotionMode(MotionMode.FULL_DRIVE);
     }
 
     // swerveDrive.seed();
@@ -345,7 +226,6 @@ public class Robot extends LoggedRobot {
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(swerveDrive.getTotalCurrentDraw()));
 
-    Logger.getInstance().recordOutput("Game piece mode", gamePieceMode.name());
     Logger.getInstance()
         .recordOutput(
             "Filtered CAN Utilization",
@@ -362,10 +242,6 @@ public class Robot extends LoggedRobot {
 
     TimestampedDoubleArray[] rearfQueue = rearVisionPose.readQueue();
     TimestampedDoubleArray[] rearcQueue = rearCamera2TagPose.readQueue();
-
-    if (driver.getRightX() > 0.5) {
-      motionMode = MotionMode.FULL_DRIVE;
-    }
 
     if (frontfQueue.length > 0
         && frontcQueue.length > 0
@@ -388,9 +264,7 @@ public class Robot extends LoggedRobot {
       autoCommand.cancel();
     }
     swerveDrive.seed();
-
-    Robot.motionMode = MotionMode.LOCKDOWN;
-
+    swerveDrive.setMotionMode(MotionMode.LOCKDOWN);
     vision.setCurrentSnapshotMode(SnapshotMode.OFF);
   }
 
@@ -407,7 +281,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousInit() {
     checkAlliance();
-    motionMode = MotionMode.TRAJECTORY;
+    swerveDrive.setMotionMode(MotionMode.TRAJECTORY);
     autoCommand = autoChooser.get();
 
     if (autoCommand != null) {
@@ -426,17 +300,10 @@ public class Robot extends LoggedRobot {
     if (autoCommand != null) {
       autoCommand.cancel();
     }
-    Robot.motionMode = MotionMode.FULL_DRIVE;
-    // Autos.clearAll();
-    // AutoPath.Autos.clearAll();
+    swerveDrive.setMotionMode(MotionMode.FULL_DRIVE);
 
     vision.setCurrentSnapshotMode(SnapshotMode.TWO_PER_SECOND);
   }
-
-  // grab botpose from the network table, put it into swerve drive inputs, read
-  // botpose, and put
-  // that into the pose estimator
-  // using the vision command
 
   @Override
   public void teleopPeriodic() {}
@@ -482,16 +349,7 @@ public class Robot extends LoggedRobot {
         swerveDrive.resetGyro(Rotation2d.fromDegrees(0));
       }
 
-      goClosestGrid = new GoClosestGrid();
       buildAutoChooser();
     }
-  }
-
-  public String goFast() {
-    return "nyoooooooooom";
-  }
-
-  public String goSlow() {
-    return "...nyom...";
   }
 }

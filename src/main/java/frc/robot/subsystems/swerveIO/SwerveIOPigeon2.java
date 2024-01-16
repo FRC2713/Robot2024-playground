@@ -3,6 +3,8 @@ package frc.robot.subsystems.swerveIO;
 import com.ctre.phoenix.sensors.Pigeon2;
 import com.ctre.phoenix.sensors.PigeonIMU_StatusFrame;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import frc.robot.Constants.RobotMap;
 import frc.robot.util.RedHawkUtil;
 import java.util.HashMap;
@@ -40,8 +42,10 @@ public class SwerveIOPigeon2 implements SwerveIO {
   }
 
   @Override
-  public void updateInputs(SwerveInputs inputs) {
-    // inputs.gyroCompassHeading = gyro.getAbsoluteCompassHeading();
+  public void updateInputs(
+      SwerveInputs inputs,
+      SwerveDriveKinematics kinematics,
+      SwerveModulePosition[] measuredPositions) {
     inputs.previousgyroPitchPosition = inputs.gyroPitchPosition;
     inputs.gyroPitchPosition = gyro.getPitch();
     inputs.gyroRollPosition = gyro.getRoll();
